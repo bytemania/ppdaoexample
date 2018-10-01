@@ -28,9 +28,7 @@ public class Application {
             for (String beanName : beanNames) {
                 out.println(beanName);
             }
-
         };
     }
-
 
 }
