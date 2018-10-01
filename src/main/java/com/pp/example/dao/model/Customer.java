@@ -2,6 +2,8 @@ package com.pp.example.dao.model;
 
 import lombok.*;
 
+import java.util.Objects;
+
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -23,4 +25,16 @@ public class Customer implements BaseEntity<Long>  {
         return id;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Customer)) return false;
+        Customer customer = (Customer) o;
+        return Objects.equals(getId(), customer.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 }

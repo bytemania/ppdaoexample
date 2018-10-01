@@ -12,7 +12,7 @@ public class Address implements BaseEntity<Long> {
     @NonNull
     private final Long id;
     @NonNull
-    private final String Address;
+    private final String address;
 
     public Long getId() {
         return id;
