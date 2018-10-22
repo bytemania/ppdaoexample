@@ -3,9 +3,11 @@ package com.pp.example.dao.dao.impl;
 import com.google.common.collect.ImmutableMap;
 import com.pp.example.dao.dao.CustomerDao;
 import com.pp.example.dao.dao.exception.PersistException;
+import com.pp.example.dao.dao.exception.ReadException;
 import com.pp.example.dao.model.Address;
 import com.pp.example.dao.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -50,12 +52,10 @@ public class CustomerDaoImpl implements CustomerDao {
             "WHERE C.ID = :id";
 
     private static final String CREATE_CUSTOMER =
-            "";
+            "INSERT INTO CUSTOMER(ID, NAME, ADDRESS_ID, REFERRER_ID) VALUES (:id, :name, :addressId, :referrer_id)";
 
     private static final String CREATE_ADDRESS =
-            "";
-
-
+            "INSERT INTO ADDRESS(ID, ADDRESS) VALUES (:addressId, :address)";
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -66,17 +66,19 @@ public class CustomerDaoImpl implements CustomerDao {
 
 
     @Override
-    public Customer create(Customer customer) throws PersistException, SQLException {
+    public Customer create(Customer customer) throws PersistException {
         return null;
     }
 
     @Override
-    public Optional<Customer> read(@NotNull Long id) throws IllegalArgumentException {
+    public Optional<Customer> read(@NotNull Long id) throws IllegalArgumentException, ReadException {
         try {
-             return Optional.of(namedParameterJdbcTemplate.queryForObject(READ, ImmutableMap.<String, Object>builder().put("id", id).build(),
+             return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(READ, ImmutableMap.<String, Object>builder().put("id", id).build(),
                     CUSTOMER_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
+        } catch (DataAccessException e) {
+            throw new ReadException(e);
         }
     }
 
