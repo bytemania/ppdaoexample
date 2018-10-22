@@ -6,9 +6,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public abstract class MarketTypeMaxPrice {
+public abstract class MarketTypeMaxPrice implements BaseEntity<Long> {
 
     public enum MarketType {PRE_MATCH, BIR}
+
+    @NonNull
+    private final Long id;
 
     @NonNull
     private final Long numerator;
@@ -18,5 +21,9 @@ public abstract class MarketTypeMaxPrice {
 
     @NonNull
     abstract MarketType getMarketType();
+
+    public Long getId() {
+        return id;
+    }
 
 }

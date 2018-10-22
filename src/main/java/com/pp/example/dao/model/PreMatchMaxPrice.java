@@ -4,8 +4,8 @@ import lombok.NonNull;
 
 public class PreMatchMaxPrice extends MarketTypeMaxPrice {
 
-    public PreMatchMaxPrice(@NonNull Long numerator, @NonNull Long denominator) {
-        super(numerator, denominator);
+    public PreMatchMaxPrice(@NonNull Long id, @NonNull Long numerator, @NonNull Long denominator) {
+        super(id, numerator, denominator);
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Getter
 @ToString
-public class Customer implements BaseEntity<Long>  {
+public class Customer implements BaseEntity<Long> {
     @NonNull
     private final Long id;
     @NonNull
