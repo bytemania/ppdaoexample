@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.validation.constraints.NotNull;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,7 @@ public class CustomerDaoImpl implements CustomerDao {
         Map<String, Object> map = new HashMap<>();
 
         map.put("id", customer.getId());
-        map.put("referrer_id", customer.getReferrerId());
+        map.put("referrerId", customer.getReferrerId());
         map.put("name", customer.getName());
         map.put("addressId", customer.getAddress().getId());
         map.put("address", customer.getAddress().getAddress());
@@ -50,12 +49,24 @@ public class CustomerDaoImpl implements CustomerDao {
             "SELECT C.ID, C.NAME, C.ADDRESS_ID, A.ADDRESS, C.REFERRER_ID " +
             "FROM CUSTOMER C INNER JOIN ADDRESS A ON C.ADDRESS_ID = A.ID " +
             "WHERE C.ID = :id";
+    private static final String READ_ALL =
+            "SELECT C.ID, C.NAME, C.ADDRESS_ID, A.ADDRESS, C.REFERRER_ID " +
+            "FROM CUSTOMER C INNER JOIN ADDRESS A ON C.ADDRESS_ID = A.ID";
 
     private static final String CREATE_CUSTOMER =
-            "INSERT INTO CUSTOMER(ID, NAME, ADDRESS_ID, REFERRER_ID) VALUES (:id, :name, :addressId, :referrer_id)";
-
+        "INSERT INTO CUSTOMER(ID, NAME, ADDRESS_ID, REFERRER_ID) VALUES (:id, :name, :addressId, :referrerId)";
     private static final String CREATE_ADDRESS =
-            "INSERT INTO ADDRESS(ID, ADDRESS) VALUES (:addressId, :address)";
+        "INSERT INTO ADDRESS(ID, ADDRESS) VALUES (:addressId, :address)";
+
+    private static final String UPDATE_CUSTOMER =
+            "UPDATE CUSTOMER SET NAME = :name, ADDRESS_ID = :addressId, REFERRER_ID = :referrerId WHERE ID = :id";
+    private static final String UPDATE_ADDRESS =
+            "UPDATE ADDRESS SET ADDRESS = :address WHERE ID = :addressId";
+
+    private static final String DELETE_CUSTOMER =
+            "DELETE FROM CUSTOMER WHERE ID = :id";
+    private static final String DELETE_ADDRESS =
+            "DELETE FROM ADDRESS WHERE ID = :addressId";
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -66,8 +77,15 @@ public class CustomerDaoImpl implements CustomerDao {
 
 
     @Override
-    public Customer create(Customer customer) throws PersistException {
-        return null;
+    public Customer create(@NotNull Customer customer) throws PersistException {
+        try {
+            Map<String, Object> params = CUSTOMER_UNMAPPER.unmapper(customer);
+            namedParameterJdbcTemplate.update(CREATE_ADDRESS, params);
+            namedParameterJdbcTemplate.update(CREATE_CUSTOMER, params);
+            return customer;
+        } catch (DataAccessException e) {
+            throw new PersistException(e);
+        }
     }
 
     @Override
@@ -83,17 +101,45 @@ public class CustomerDaoImpl implements CustomerDao {
     }
 
     @Override
-    public List<Customer> read() throws IllegalArgumentException, SQLException {
-        return null;
+    public List<Customer> read() throws IllegalArgumentException, ReadException {
+        try {
+            return namedParameterJdbcTemplate.query(READ_ALL, CUSTOMER_ROW_MAPPER);
+        } catch (DataAccessException e) {
+            throw new ReadException(e);
+        }
     }
 
     @Override
-    public void update(Customer customer) throws SQLException {
+    public Customer update(Customer customer) throws PersistException {
+        try {
+            Map<String, Object> params = CUSTOMER_UNMAPPER.unmapper(customer);
+            int numAddress = namedParameterJdbcTemplate.update(UPDATE_ADDRESS, params);
+            int numCustomers = namedParameterJdbcTemplate.update(UPDATE_CUSTOMER, params);
 
+            if (numAddress != 1 || numCustomers != 1) {
+                throw new PersistException("Customer not found: {0}", customer);
+            } else {
+                return customer;
+            }
+        } catch (DataAccessException e) {
+            throw new PersistException(e);
+        }
     }
 
     @Override
-    public void delete(Long id) throws SQLException {
+    public void delete(@NotNull Long id) throws PersistException {
+        try {
+            Optional<Customer> customerOptional = read(id);
+            if (customerOptional.isPresent()) {
+               namedParameterJdbcTemplate.update(DELETE_CUSTOMER,
+                       ImmutableMap.<String, Object>builder().put("id", customerOptional.get().getId()).build());
+                namedParameterJdbcTemplate.update(DELETE_ADDRESS,
+                        ImmutableMap.<String, Object>builder().put("addressId",
+                                customerOptional.get().getAddress().getId()).build());
+            }
+        } catch (ReadException | DataAccessException e) {
+            throw new PersistException(e);
+        }
 
     }
 }

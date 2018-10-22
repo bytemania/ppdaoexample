@@ -4,18 +4,17 @@ import com.pp.example.dao.dao.exception.PersistException;
 import com.pp.example.dao.dao.exception.ReadException;
 
 import javax.validation.constraints.NotNull;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 public interface BaseDao<PK, E> {
-    E create(E e) throws PersistException;
+    E create(@NotNull E e) throws PersistException;
 
     Optional<E> read(@NotNull PK id) throws IllegalArgumentException, ReadException;
 
-    List<E> read() throws IllegalArgumentException, SQLException;
+    List<E> read() throws IllegalArgumentException, ReadException;
 
-    void update(E e) throws SQLException;
+    E update(@NotNull E e) throws PersistException;
 
-    void delete(PK id) throws SQLException;
+    void delete(@NotNull PK id) throws PersistException;
 }
